@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String    @id @default(uuid())
+  telegramId  String    @unique
+  firstName   String
+  lastName    String?
+  username    String?
+  photoUrl    String?
+  phoneNumber String?
+  status      String    @default("active")
+  location    String?
+  isBlocked   Boolean   @default(false)
+  blockReason String?
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  ads            Ad[]
+  likes          AdLike[]
+  AdView         AdView[]
+  Comment        Comment[]
+  RecentActivity RecentActivity[]
+}
+
+model Admin {
+  id        String    @id @default(uuid())
+  username  String    @unique
+  password  String
+  role      AdminRole @default(ADMIN)
+  isActive  Boolean   @default(true)
+  lastLogin DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+enum AdminRole {
+  SUPERADMIN
+  ADMIN
+  MODERATOR
+}
+
+model Region {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  cities    City[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model City {
+  id        String   @id @default(uuid())
+  name      String
+  regionId  String
+  region    Region   @relation(fields: [regionId], references: [id])
+  ads       Ad[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum AdType {
+  OWNER
+  ROOMMATE
+}
+
+enum ForWhom {
+  FAMILY
+  FEMALE
+  MALE
+  STUDENT_GIRLS
+  STUDENT_BOYS
+}
+
+enum RentType {
+  DAILY
+  MONTHLY
+  WEEKLY
+}
+
+model Ad {
+  id          String  @id @default(uuid())
+  title       String
+  price       Float
+  currency    String  @default("UZS")
+
+  adType   AdType
+  forWhom  ForWhom
+  rentType RentType
+
+  totalRooms   Int?
+  currentFloor Int?
+  totalFloors  Int?
+  address      String?
+  images       String[]
+
+  latitude  Float?
+  longitude Float?
+
+  conditions String?
+
+  totalTenants   Int? // jami nechta kishi turadi
+  availableSpots Int? // yana necha kishiga joy bor
+
+  status         AdStatus @default(PENDING)
+  isVerified     Boolean  @default(false)
+  viewsCount     Int      @default(0)
+  favoritesCount Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id])
+
+  amenities      AdAmenity[]
+  likes          AdLike[]
+  AdView         AdView[]
+  Comment        Comment[]
+  RecentActivity RecentActivity[]
+}
+
+enum AdStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AdView {
+  userId String
+  adId   String
+
+  user User @relation(fields: [userId], references: [id])
+  ad   Ad   @relation(fields: [adId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, adId])
+}
+
+model Amenity {
+  id   String @id @default(uuid())
+  name String @unique
+
+  ads AdAmenity[]
+}
+
+model AdAmenity {
+  adId      String
+  amenityId String
+
+  ad        Ad     @relation(fields: [adId], references: [id], onDelete: Cascade)
+  amenity Amenity @relation(fields: [amenityId], references: [id])
+
+  @@id([adId, amenityId])
+}
+
+model AdLike {
+  userId String
+  adId   String
+
+  user User @relation(fields: [userId], references: [id])
+  ad   Ad   @relation(fields: [adId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, adId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  adId           String
+  ad             Ad               @relation(fields: [adId], references: [id])
+  RecentActivity RecentActivity[]
+}
+
+model RecentActivity {
+  id        String       @id @default(uuid())
+  type      ActivityType
+  userId    String
+  adId      String? // agar ad bilan bog‘liq bo‘lsa
+  commentId String? // agar comment bilan bog‘liq bo‘lsa
+  createdAt DateTime     @default(now())
+
+  user    User     @relation(fields: [userId], references: [id])
+  ad      Ad?      @relation(fields: [adId], references: [id])
+  comment Comment? @relation(fields: [commentId], references: [id])
+}
+
+enum ActivityType {
+  NEW_AD
+  AD_APPROVED
+  AD_REJECTED
+  NEW_COMMENT
+  NEW_USER
+  USER_BLOCKED
+  USER_UNBLOCKED
+}
