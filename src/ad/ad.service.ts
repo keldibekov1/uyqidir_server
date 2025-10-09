@@ -178,11 +178,17 @@ export class AdService {
 
     if (!ad) throw new NotFoundException('Bunday ad topilmadi');
 
-    return {
+    const result = {
       ...ad,
       liked: userId ? ad.likes.some((like) => like.userId === userId) : false,
       likeCount: ad.likes.length,
     };
+
+    return JSON.parse(
+      JSON.stringify(result, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    );
   }
 
   async findOneAdmin(id: string) {
@@ -197,7 +203,11 @@ export class AdService {
 
     if (!ad) throw new NotFoundException('Bunday ad topilmadi');
 
-    return ad;
+    return JSON.parse(
+      JSON.stringify(ad, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    );
   }
 
   async update(id: string, data: UpdateAdDto) {
