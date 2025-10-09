@@ -8,20 +8,25 @@ import {
   Delete,
   Req,
   Query,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { AdService } from './ad.service';
 import { CreateAdDto } from './dto/create-ad.dto';
 import { UpdateAdDto } from './dto/update-ad.dto';
 import { ApiQuery } from '@nestjs/swagger';
 import { AdStatus, AdType, ForWhom, RentType } from '@prisma/client';
+import { JwtAuthGuard } from 'src/guard/auth.guard';
 
 @Controller('ad')
 export class AdController {
   constructor(private readonly adService: AdService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() createAdDto: CreateAdDto) {
-    return this.adService.create(createAdDto);
+  create(@Body() createAdDto: CreateAdDto, @Request() req) {
+    const userId = req.user.id;
+    return this.adService.create(createAdDto,userId);
   }
 
   @ApiQuery({ name: 'page', required: false, example: 1 })

@@ -91,10 +91,7 @@ export class CreateAdDto {
   @IsOptional()
   availableSpots?: number;
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
+
 
   @ApiProperty()
   @IsString()

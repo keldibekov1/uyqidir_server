@@ -12,7 +12,7 @@ import { AdStatus, AdType, ForWhom, RentType } from '@prisma/client';
 export class AdService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: CreateAdDto) {
+  async create(data: CreateAdDto, userId: string) {
     if (data.adType === 'ROOMMATE') {
       if (data.totalTenants == null || data.availableSpots == null) {
         throw new BadRequestException(
@@ -60,7 +60,7 @@ export class AdService {
         rentType: data.rentType,
         totalTenants: data.totalTenants,
         availableSpots: data.availableSpots,
-        userId: data.userId,
+        userId,
         cityId: data.cityId,
         amenities: {
           create:
@@ -175,14 +175,12 @@ export class AdService {
       const ad = await this.prisma.ad.findUnique({ where: { id } });
       if (!ad) throw new NotFoundException('Bunday elon topilmadi');
 
-      const { userId, cityId, amenities, ...rest } = data;
+      const { cityId, amenities, ...rest } = data;
 
       return await this.prisma.ad.update({
         where: { id },
         data: {
           ...rest,
-
-          ...(userId ? { user: { connect: { id: userId } } } : {}),
 
           ...(cityId ? { city: { connect: { id: cityId } } } : {}),
 

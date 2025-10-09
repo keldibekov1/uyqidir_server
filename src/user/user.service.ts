@@ -9,50 +9,50 @@ export class UserService {
 
   constructor(private prisma: PrismaService) {}
 
-  async createOrUpdate(data: CreateUserDto) {
-    const existing = await this.prisma.user.findUnique({
-      where: { telegramId: data.telegramId },
-    });
+  // async createOrUpdate(data: CreateUserDto) {
+  //   const existing = await this.prisma.user.findUnique({
+  //     where: { telegramId: data.telegramId },
+  //   });
 
-    if (existing) {
-      const isChanged =
-        existing.firstName !== data.firstName ||
-        existing.lastName !== data.lastName ||
-        existing.username !== data.username ||
-        existing.photoUrl !== data.photoUrl;
+  //   if (existing) {
+  //     const isChanged =
+  //       existing.firstName !== data.firstName ||
+  //       existing.lastName !== data.lastName ||
+  //       existing.username !== data.username ||
+  //       existing.photoUrl !== data.photoUrl;
 
-      if (isChanged) {
-        return await this.prisma.user.update({
-          where: { telegramId: data.telegramId },
-          data: {
-            firstName: data.firstName,
-            lastName: data.lastName,
-            username: data.username,
-            photoUrl: data.photoUrl,
-            lastLoginAt: new Date(),
-          },
-        });
-      }
+  //     if (isChanged) {
+  //       return await this.prisma.user.update({
+  //         where: { telegramId: data.telegramId },
+  //         data: {
+  //           firstName: data.firstName,
+  //           lastName: data.lastName,
+  //           username: data.username,
+  //           photoUrl: data.photoUrl,
+  //           lastLoginAt: new Date(),
+  //         },
+  //       });
+  //     }
 
-      await this.prisma.user.update({
-        where: { telegramId: data.telegramId },
-        data: { lastLoginAt: new Date() },
-      });
+  //     await this.prisma.user.update({
+  //       where: { telegramId: data.telegramId },
+  //       data: { lastLoginAt: new Date() },
+  //     });
 
-      return existing;
-    }
+  //     return existing;
+  //   }
 
-    return await this.prisma.user.create({
-      data: {
-        telegramId: data.telegramId,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        username: data.username,
-        photoUrl: data.photoUrl,
-        lastLoginAt: new Date(),
-      },
-    });
-  }
+  //   return await this.prisma.user.create({
+  //     data: {
+  //       telegramId: data.telegramId,
+  //       firstName: data.firstName,
+  //       lastName: data.lastName,
+  //       username: data.username,
+  //       photoUrl: data.photoUrl,
+  //       lastLoginAt: new Date(),
+  //     },
+  //   });
+  // }
 
   async findAll() {
     return await this.prisma.user.findMany();

@@ -20,22 +20,22 @@ export class UserController {
 
 
 
-@Get('me')
-@UseGuards(TelegramAuthGuard)
-async getOrCreateUser(@Req() req) {
-  console.log('req.user (from guard):', req.user);
+// @Get('me')
+// @UseGuards(TelegramAuthGuard)
+// async getOrCreateUser(@Req() req) {
+//   console.log('req.user (from guard):', req.user);
 
-  const userData = {
-    telegramId: req.user.telegramId,
-    firstName: req.user.firstName,
-    lastName: req.user.lastName,
-    username: req.user.username,
-    photoUrl: req.user.photoUrl,
-  };
+//   const userData = {
+//     telegramId: req.user.telegramId,
+//     firstName: req.user.firstName,
+//     lastName: req.user.lastName,
+//     username: req.user.username,
+//     photoUrl: req.user.photoUrl,
+//   };
 
-  const user = await this.userService.createOrUpdate(userData);
-  return user;
-}
+//   const user = await this.userService.createOrUpdate(userData);
+//   return user;
+// }
 
 
   @Get()

@@ -12,9 +12,10 @@ import { AmenityModule } from './amenity/amenity.module';
 import { CommentModule } from './comment/comment.module';
 import { LikeModule } from './like/like.module';
 import { UploadModule } from './upload/upload.module';
+import { TelegramAuthModule } from './telegram-auth/telegram-auth.module';
 
 @Module({
-  imports: [UserModule,PrismaModule, AuthModule, RegionModule, CityModule, AdminModule, AdModule, AmenityModule, CommentModule, LikeModule, UploadModule],
+  imports: [UserModule,PrismaModule, AuthModule, RegionModule, CityModule, AdminModule, AdModule, AmenityModule, CommentModule, LikeModule, UploadModule, TelegramAuthModule],
   controllers: [AppController],
   providers: [AppService],
 })
