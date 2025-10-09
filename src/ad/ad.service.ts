@@ -157,13 +157,17 @@ export class AdService {
       }),
       this.prisma.ad.count({ where }),
     ]);
-
-    return {
-      total,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
-      data,
-    };
+    return JSON.parse(
+      JSON.stringify(
+        {
+          total,
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          data,
+        },
+        (_, value) => (typeof value === 'bigint' ? value.toString() : value),
+      ),
+    );
   }
 
   async findOne(id: string, userId?: string) {
