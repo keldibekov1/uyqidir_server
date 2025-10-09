@@ -217,13 +217,11 @@ export class AdService {
 
       const { cityId, amenities, ...rest } = data;
 
-      return await this.prisma.ad.update({
+      const updated = await this.prisma.ad.update({
         where: { id },
         data: {
           ...rest,
-
           ...(cityId ? { city: { connect: { id: cityId } } } : {}),
-
           ...(amenities
             ? {
                 amenities: {
@@ -241,6 +239,13 @@ export class AdService {
           amenities: { include: { amenity: true } },
         },
       });
+
+      // 🔥 BigInt to string fix
+      return JSON.parse(
+        JSON.stringify(updated, (_, value) =>
+          typeof value === 'bigint' ? value.toString() : value,
+        ),
+      );
     } catch (error) {
       console.log(error);
       throw new NotFoundException('Elonni yangilab bolmadi');
