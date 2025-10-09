@@ -4,12 +4,25 @@ import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import * as express from 'express';
 import { join } from 'path';
+import * as fs from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug', 'verbose'], 
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
 
+  const uploadDirs = [
+    join(__dirname, '..', 'uploads'),
+    join(__dirname, '..', 'uploads', 'temp'),
+    join(__dirname, '..', 'uploads', 'final'),
+  ];
+
+  for (const dir of uploadDirs) {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      Logger.log(`📁 Created folder: ${dir}`);
+    }
+  }
   app.enableCors();
   app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
 
@@ -35,4 +48,5 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
   Logger.log(`🚀 Server run on port ${process.env.PORT ?? 3000}`, 'Bootstrap');
 }
+
 bootstrap();

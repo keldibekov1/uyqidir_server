@@ -1,61 +1,77 @@
-import { 
-  Controller, 
-  Post, 
-  UseInterceptors, 
-  UploadedFiles 
+import {
+  Controller,
+  Post,
+  Delete,
+  Body,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import * as path from 'path';
 import { diskStorage } from 'multer';
+import * as fs from 'fs';
+import * as path from 'path';
 
-@ApiTags('Upload')
 @Controller('upload')
 export class UploadController {
-  @ApiOperation({ summary: 'Bir nechta fayl yuklash' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        files: {
-          type: 'array',
-          items: {
-            type: 'string',
-            format: 'binary',
-          },
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 201, description: 'Fayllar muvaffaqiyatli yuklandi.' })
-  @ApiResponse({ status: 400, description: 'Notogri malumot.' })
-  @Post('multiple')
+  // 🔹 1. TEMPGA YUKLASH
+  @Post('temp')
   @UseInterceptors(
-    FilesInterceptor('files', 10, {
+    FilesInterceptor('file', 10, {
       storage: diskStorage({
-        destination: path.join(__dirname, '../../uploads'),
+        destination: path.join(__dirname, '../../uploads/temp'),
         filename(req, file, cb) {
-          const fileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
-          cb(null, fileName);
+          const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+          const ext = path.extname(file.originalname);
+          cb(null, `${unique}${ext}`);
         },
       }),
     }),
   )
-  uploadMultiple(@UploadedFiles() files: Express.Multer.File[]) {
-    if (!files || files.length === 0) {
-      return { message: 'Hech narsa yuklamading, aka. Fayl yubor!' };
-    }
+  uploadTemp(@UploadedFiles() files: Express.Multer.File[]) {
+    if (!files || files.length === 0) return { message: 'Fayl yubor, aka!' };
 
-    const fileUrls = files.map((file) => ({
-      originalName: file.originalname,
-      fileUrl: `/uploads/${file.filename}`,
-      size: `${(file.size / 1024).toFixed(1)} KB`,
-    }));
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
     return {
-      message: `Fayllar muvaffaqiyatli yuklandi (${files.length} ta).`,
-      files: fileUrls,
+      files: files.map((f) => ({
+        fileName: f.filename,
+        fileUrl: `${baseUrl}/uploads/temp/${f.filename}`,
+      })),
+    };
+  }
+
+  // 🔹 2. TEMP FAYLNI O‘CHIRISH
+  @Delete('temp')
+  deleteTemp(@Body('fileName') fileName: string) {
+    const filePath = path.join(__dirname, '../../uploads/temp', fileName);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      return { message: 'Rasm o‘chirildi ✅' };
+    }
+    return { message: 'Bunday fayl yo‘q ❌' };
+  }
+
+  // 🔹 3. TEMP → FINALGA O‘TKAZISH
+  @Post('move-to-final')
+  moveToFinal(@Body('files') files: string[]) {
+    if (!Array.isArray(files) || files.length === 0)
+      return { message: 'Fayllar yo‘q' };
+
+    const finalUrls: string[] = [];
+
+    for (const name of files) {
+      const tempPath = path.join(__dirname, '../../uploads/temp', name);
+      const finalPath = path.join(__dirname, '../../uploads/final', name);
+
+      if (fs.existsSync(tempPath)) {
+        fs.renameSync(tempPath, finalPath);
+        finalUrls.push(`/uploads/final/${name}`);
+      }
+    }
+
+    return {
+      message: `Ko‘chirish tugadi (${finalUrls.length} ta fayl) ✅`,
+      finalUrls,
     };
   }
 }

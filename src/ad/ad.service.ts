@@ -3,6 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { CreateAdDto } from './dto/create-ad.dto';
 import { UpdateAdDto } from './dto/update-ad.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -13,6 +15,7 @@ export class AdService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: CreateAdDto, userId: string) {
+    // 1️⃣ ROOMMATE tekshiruv
     if (data.adType === 'ROOMMATE') {
       if (data.totalTenants == null || data.availableSpots == null) {
         throw new BadRequestException(
@@ -21,14 +24,35 @@ export class AdService {
       }
     }
 
+    // 2️⃣ Shahar va regionni tekshirish
     const city = await this.prisma.city.findUnique({
       where: { id: data.cityId },
       include: { region: true },
     });
+
     if (!city) {
       throw new BadRequestException('Bunday shahar mavjud emas');
     }
 
+    // 3️⃣ Rasm fayllarni TEMP → FINAL papkaga o‘tkazish
+    const finalImages = [] as string[];
+    for (const name of data.images || []) {
+      const tempPath = path.join(__dirname, '../../uploads/temp', name);
+      const finalPath = path.join(__dirname, '../../uploads/final', name);
+
+      try {
+        if (fs.existsSync(tempPath)) {
+          fs.renameSync(tempPath, finalPath);
+          finalImages.push(`/uploads/final/${name}`);
+        } else {
+          console.warn(`❌ ${name} topilmadi, temp papkada yo‘q`);
+        }
+      } catch (err) {
+        console.error(`❌ Fayl ko‘chirishda xatolik: ${name}`, err);
+      }
+    }
+
+    // 4️⃣ Title generatsiya
     const forWhomMap = {
       FAMILY: 'Oila uchun',
       FEMALE: 'Ayollar uchun',
@@ -39,14 +63,15 @@ export class AdService {
 
     const forWhomText = forWhomMap[data.forWhom];
     const roomsText = data.totalRooms ? `${data.totalRooms} xonali ` : '';
-    const title = `${city.region.name}, ${city.name} ${roomsText}${forWhomText} `;
+    const title = `${city.region.name}, ${city.name} ${roomsText}${forWhomText}`;
 
-    return await this.prisma.ad.create({
+    // 5️⃣ Bazaga yozish
+    const newAd = await this.prisma.ad.create({
       data: {
         title,
         price: data.price,
         currency: data.currency,
-        images: data.images,
+        images: finalImages,
         totalRooms: data.totalRooms,
         currentFloor: data.currentFloor,
         totalFloors: data.totalFloors,
@@ -73,8 +98,9 @@ export class AdService {
         amenities: { include: { amenity: true } },
       },
     });
-  }
 
+    return newAd;
+  }
   async findAll(
     page: number = 1,
     limit: number = 10,
@@ -207,11 +233,33 @@ export class AdService {
     }
   }
 
-  async remove(id: string) {
-    try {
-      return await this.prisma.ad.delete({ where: { id } });
-    } catch {
-      throw new NotFoundException('Bunday ad topilmadi');
+  async remove(adId: string) {
+    const ad = await this.prisma.ad.findUnique({
+      where: { id: adId },
+    });
+
+    if (!ad) {
+      throw new NotFoundException('Bunday elon topilmadi!');
     }
+
+    // if (ad.userId !== userId) {
+    //   throw new BadRequestException('Bu elon sizniki emas, aka!');
+    // }
+
+    if (ad.images && ad.images.length > 0) {
+      ad.images.forEach((imgPath) => {
+        const filePath = path.join(__dirname, '../../', imgPath);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log(`Fayl o‘chirildi: ${filePath}`);
+        }
+      });
+    }
+
+    await this.prisma.ad.delete({
+      where: { id: adId },
+    });
+
+    return { message: 'Elon va uning rasmlari o‘chirildi!' };
   }
 }
