@@ -10,10 +10,10 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as sharp from 'sharp';
 
 @Controller('upload')
 export class UploadController {
-  // 🔹 1. TEMPGA YUKLASH
   @Post('temp')
   @UseInterceptors(
     FilesInterceptor('file', 10, {
@@ -27,10 +27,39 @@ export class UploadController {
       }),
     }),
   )
-  uploadTemp(@UploadedFiles() files: Express.Multer.File[]) {
+  async uploadTemp(@UploadedFiles() files: Express.Multer.File[]) {
     if (!files || files.length === 0) return { message: 'Fayl yubor, aka!' };
 
     const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+
+    await Promise.all(
+      files.map(async (file) => {
+        const filePath = path.join(
+          __dirname,
+          '../../uploads/temp',
+          file.filename,
+        );
+
+        try {
+          if (!fs.existsSync(filePath)) {
+            console.error(`❌ Fayl topilmadi: ${filePath}`);
+            return;
+          }
+
+          const tempCompressed = `${filePath}.tmp`;
+
+          await sharp(filePath)
+            .rotate()
+            .resize({ width: 1920, withoutEnlargement: true })
+            .jpeg({ quality: 80 })
+            .toFile(tempCompressed);
+
+          fs.renameSync(tempCompressed, filePath);
+        } catch (err) {
+          console.error(`⚠️ ${file.filename} siqishda xatolik:`, err);
+        }
+      }),
+    );
 
     return {
       files: files.map((f) => ({
@@ -40,7 +69,6 @@ export class UploadController {
     };
   }
 
-  // 🔹 2. TEMP FAYLNI O‘CHIRISH
   @Delete('temp')
   deleteTemp(@Body('fileName') fileName: string) {
     const filePath = path.join(__dirname, '../../uploads/temp', fileName);
@@ -51,7 +79,6 @@ export class UploadController {
     return { message: 'Bunday fayl yo‘q ❌' };
   }
 
-  // 🔹 3. TEMP → FINALGA O‘TKAZISH
   @Post('move-to-final')
   moveToFinal(@Body('files') files: string[]) {
     if (!Array.isArray(files) || files.length === 0)
