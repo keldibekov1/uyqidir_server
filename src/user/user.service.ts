@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -55,7 +60,13 @@ export class UserService {
   // }
 
   async findAll() {
-    return await this.prisma.user.findMany();
+    const users = await this.prisma.user.findMany();
+
+    return JSON.parse(
+      JSON.stringify(users, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    );
   }
 
   async getMe(userId: string) {
@@ -67,7 +78,11 @@ export class UserService {
       throw new NotFoundException('User topilmadi');
     }
 
-    return user;
+    return JSON.parse(
+      JSON.stringify(user, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    );
   }
 
   async findOne(id: string) {
@@ -94,15 +109,23 @@ export class UserService {
         where: { phoneNumber: data.phoneNumber },
       });
 
-      if (existing ) {
-        throw new UnauthorizedException('Bu telefon nuber boshqaga tegishli');
+      if (existing) {
+        throw new UnauthorizedException(
+          'Bu telefon raqami boshqa foydalanuvchiga tegishli',
+        );
       }
     }
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id: userId },
       data,
     });
+
+    return JSON.parse(
+      JSON.stringify(updatedUser, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    );
   }
 
   async update(id: string, data: UpdateUserDto) {
