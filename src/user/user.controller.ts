@@ -8,44 +8,36 @@ import {
   Delete,
   UseGuards,
   Req,
+  Request,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { TelegramAuthGuard } from 'src/auth/telegram.guard';
+import { JwtAuthGuard } from 'src/guard/auth.guard';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-
-
-// @Get('me')
-// @UseGuards(TelegramAuthGuard)
-// async getOrCreateUser(@Req() req) {
-//   console.log('req.user (from guard):', req.user);
-
-//   const userData = {
-//     telegramId: req.user.telegramId,
-//     firstName: req.user.firstName,
-//     lastName: req.user.lastName,
-//     username: req.user.username,
-//     photoUrl: req.user.photoUrl,
-//   };
-
-//   const user = await this.userService.createOrUpdate(userData);
-//   return user;
-// }
-
-
   @Get()
   findAll() {
     return this.userService.findAll();
+  }
+  @UseGuards(JwtAuthGuard)
+  @Get('/me')
+  getMe(@Request() req) {
+    return this.userService.getMe(req.user.id);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOne(id);
+  }
+  @UseGuards(JwtAuthGuard)
+  @Patch('/me')
+  updateMe(@Request() req, @Body() updateData: any) {
+    return this.userService.updateMe(req.user.id, updateData);
   }
 
   @Patch(':id')

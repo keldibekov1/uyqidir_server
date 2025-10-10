@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -58,6 +58,18 @@ export class UserService {
     return await this.prisma.user.findMany();
   }
 
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User topilmadi');
+    }
+
+    return user;
+  }
+
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
@@ -67,6 +79,30 @@ export class UserService {
     }
 
     return user;
+  }
+  async updateMe(userId: string, data: any) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Foydalanuvchi topilmadi');
+    }
+
+    if (data.phoneNumber) {
+      const existing = await this.prisma.user.findFirst({
+        where: { phoneNumber: data.phoneNumber },
+      });
+
+      if (existing ) {
+        throw new UnauthorizedException('Bu telefon nuber boshqaga tegishli');
+      }
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
   }
 
   async update(id: string, data: UpdateUserDto) {
