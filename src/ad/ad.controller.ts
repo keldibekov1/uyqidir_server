@@ -79,11 +79,6 @@ export class AdController {
   async findOneAdmin(@Param('id') id: string) {
     return this.adService.findOneAdmin(id);
   }
-  @Get(':id')
-  async findOne(@Param('id') id: string, @Req() req) {
-    return this.adService.findOne(id, req.user.id);
-  }
-
   @UseGuards(JwtAuthGuard)
   @Get('my')
   async getMyAds(
@@ -92,6 +87,11 @@ export class AdController {
     @Query('limit') limit: number = 1000,
   ) {
     return this.adService.myAds(req.user.id, Number(page), Number(limit));
+  }
+  
+  @Get(':id')
+  async findOne(@Param('id') id: string, @Req() req) {
+    return this.adService.findOne(id, req.user.id);
   }
 
   @Patch(':id')
