@@ -15,7 +15,6 @@ export class AdService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: CreateAdDto, userId: string) {
-    // 1️⃣ ROOMMATE tekshiruv
     if (data.adType === 'ROOMMATE') {
       if (data.totalTenants == null || data.availableSpots == null) {
         throw new BadRequestException(
@@ -24,7 +23,6 @@ export class AdService {
       }
     }
 
-    // 2️⃣ Shahar va regionni tekshirish
     const city = await this.prisma.city.findUnique({
       where: { id: data.cityId },
       include: { region: true },
@@ -34,7 +32,6 @@ export class AdService {
       throw new BadRequestException('Bunday shahar mavjud emas');
     }
 
-    // 3️⃣ Rasm fayllarni TEMP → FINAL papkaga o‘tkazish
     const finalImages = [] as string[];
     for (const name of data.images || []) {
       const tempPath = path.join(__dirname, '../../uploads/temp', name);
@@ -45,14 +42,13 @@ export class AdService {
           fs.renameSync(tempPath, finalPath);
           finalImages.push(`/uploads/final/${name}`);
         } else {
-          console.warn(`❌ ${name} topilmadi, temp papkada yo‘q`);
+          console.warn(`${name} topilmadi, temp papkada yoq`);
         }
       } catch (err) {
-        console.error(`❌ Fayl ko‘chirishda xatolik: ${name}`, err);
+        console.error(`Fayl kochirishda xatolik: ${name}`, err);
       }
     }
 
-    // 4️⃣ Title generatsiya
     const forWhomMap = {
       FAMILY: 'Oila uchun',
       FEMALE: 'Ayollar uchun',
@@ -65,7 +61,6 @@ export class AdService {
     const roomsText = data.totalRooms ? `${data.totalRooms} xonali ` : '';
     const title = `${city.region.name}, ${city.name} ${roomsText}${forWhomText}`;
 
-    // 5️⃣ Bazaga yozish
     const newAd = await this.prisma.ad.create({
       data: {
         title,
@@ -150,9 +145,7 @@ export class AdService {
         take: limit,
         orderBy,
         include: {
-          user: true,
           city: true,
-          amenities: { include: { amenity: true } },
         },
       }),
       this.prisma.ad.count({ where }),
@@ -173,7 +166,12 @@ export class AdService {
   async findOne(id: string, userId?: string) {
     const ad = await this.prisma.ad.findUnique({
       where: { id },
-      include: { likes: true },
+      include: {
+        likes: true,
+        user: true,
+        city: { include: { region: true } },
+        amenities: { include: { amenity: true } },
+      },
     });
 
     if (!ad) throw new NotFoundException('Bunday ad topilmadi');
@@ -206,6 +204,35 @@ export class AdService {
     return JSON.parse(
       JSON.stringify(ad, (_, value) =>
         typeof value === 'bigint' ? value.toString() : value,
+      ),
+    );
+  }
+  async myAds(userId: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.ad.findMany({
+        where: { userId },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          city: { include: { region: true } },
+          amenities: { include: { amenity: true } },
+        },
+      }),
+      this.prisma.ad.count({ where: { userId } }),
+    ]);
+
+    return JSON.parse(
+      JSON.stringify(
+        {
+          total,
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          data,
+        },
+        (_, value) => (typeof value === 'bigint' ? value.toString() : value),
       ),
     );
   }
@@ -279,6 +306,6 @@ export class AdService {
       where: { id: adId },
     });
 
-    return { message: 'Elon va uning rasmlari o‘chirildi!' };
+    return { message: "Elon muvaqqiyatli o'chirildi!" };
   }
 }

@@ -26,7 +26,7 @@ export class AdController {
   @Post()
   create(@Body() createAdDto: CreateAdDto, @Request() req) {
     const userId = req.user.id;
-    return this.adService.create(createAdDto,userId);
+    return this.adService.create(createAdDto, userId);
   }
 
   @ApiQuery({ name: 'page', required: false, example: 1 })
@@ -84,6 +84,15 @@ export class AdController {
     return this.adService.findOne(id, req.user.id);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('my')
+  async getMyAds(
+    @Req() req,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 1000,
+  ) {
+    return this.adService.myAds(req.user.id, Number(page), Number(limit));
+  }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateAdDto: UpdateAdDto) {
