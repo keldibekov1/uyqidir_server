@@ -80,6 +80,8 @@ export class AdController {
     return this.adService.findOneAdmin(id);
   }
   @UseGuards(JwtAuthGuard)
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, example: 10 })
   @Get('my')
   async getMyAds(
     @Req() req,
@@ -88,7 +90,7 @@ export class AdController {
   ) {
     return this.adService.myAds(req.user.id, Number(page), Number(limit));
   }
-  
+
   @Get(':id')
   async findOne(@Param('id') id: string, @Req() req) {
     return this.adService.findOne(id, req.user.id);
