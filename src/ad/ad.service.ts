@@ -49,17 +49,8 @@ export class AdService {
       }
     }
 
-    const forWhomMap = {
-      FAMILY: 'Oila uchun',
-      FEMALE: 'Ayollar uchun',
-      MALE: 'Erkaklar uchun',
-      STUDENT_GIRLS: 'Talaba qizlar uchun',
-      STUDENT_BOYS: 'Talaba yigitlar uchun',
-    };
-
-    const forWhomText = forWhomMap[data.forWhom];
-    const roomsText = data.totalRooms ? `${data.totalRooms} xonali ` : '';
-    const title = `${city.region.name}, ${city.name} ${roomsText}${forWhomText}`;
+    const roomsText = data.totalRooms ? `${data.totalRooms} xonali` : '';
+    const title = `${city.region.name}, ${city.name} ${roomsText}`;
 
     const newAd = await this.prisma.ad.create({
       data: {
