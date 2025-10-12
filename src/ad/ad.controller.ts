@@ -90,10 +90,11 @@ export class AdController {
   ) {
     return this.adService.myAds(req.user.id, Number(page), Number(limit));
   }
-
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async findOne(@Param('id') id: string, @Req() req) {
-    return this.adService.findOne(id, req.user.id);
+  async findOne(@Param('id') id: string, @Request() req) {
+    const userId = req.user.id;
+    return this.adService.findOne(id, userId);
   }
 
   @Patch(':id')

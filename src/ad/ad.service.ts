@@ -49,8 +49,7 @@ export class AdService {
       }
     }
 
-    const roomsText = data.totalRooms ? `${data.totalRooms} xonali` : '';
-    const title = `${city.region.name}, ${city.name} ${roomsText}`;
+    const title = `${city.region.name}, ${city.name}`;
 
     const newAd = await this.prisma.ad.create({
       data: {
