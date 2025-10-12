@@ -9,7 +9,7 @@ datasource db {
 
 model User {
   id          String    @id @default(uuid())
-  telegramId  BigInt   @unique
+  telegramId  BigInt    @unique
   firstName   String
   lastName    String?
   username    String?
@@ -85,10 +85,10 @@ enum RentType {
 }
 
 model Ad {
-  id          String  @id @default(uuid())
-  title       String
-  price       Float
-  currency    String  @default("UZS")
+  id       String @id @default(uuid())
+  title    String
+  price    Float
+  currency String @default("UZS")
 
   adType   AdType
   forWhom  ForWhom
@@ -157,7 +157,7 @@ model AdAmenity {
   adId      String
   amenityId String
 
-  ad        Ad     @relation(fields: [adId], references: [id], onDelete: Cascade)
+  ad      Ad      @relation(fields: [adId], references: [id], onDelete: Cascade)
   amenity Amenity @relation(fields: [amenityId], references: [id])
 
   @@id([adId, amenityId])
@@ -168,7 +168,7 @@ model AdLike {
   adId   String
 
   user User @relation(fields: [userId], references: [id])
-  ad   Ad   @relation(fields: [adId], references: [id])
+  ad   Ad   @relation(fields: [adId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -185,7 +185,7 @@ model Comment {
   user   User   @relation(fields: [userId], references: [id])
 
   adId           String
-  ad             Ad               @relation(fields: [adId], references: [id])
+  ad             Ad               @relation(fields: [adId], references: [id], onDelete: Cascade)
   RecentActivity RecentActivity[]
 }
 
@@ -198,7 +198,7 @@ model RecentActivity {
   createdAt DateTime     @default(now())
 
   user    User     @relation(fields: [userId], references: [id])
-  ad      Ad?      @relation(fields: [adId], references: [id])
+  ad      Ad?      @relation(fields: [adId], references: [id], onDelete: Cascade)
   comment Comment? @relation(fields: [commentId], references: [id])
 }
 
