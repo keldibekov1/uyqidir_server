@@ -167,6 +167,12 @@ export class AdService {
     });
 
     if (!ad) throw new NotFoundException('Bunday elon topilmadi');
+    await this.prisma.ad.update({
+      where: { id },
+      data: {
+        viewsCount: { increment: 1 },
+      },
+    });
 
     const liked = userId
       ? ad.likes.some((like) => like.userId === userId)
