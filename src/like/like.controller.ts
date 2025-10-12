@@ -18,7 +18,7 @@ export class LikeController {
     const count = await this.likeService.count(adId);
     return { adId, count };
   }
-
+  @UseGuards(JwtAuthGuard)
   @Get('my')
   async myLikes(@Req() req) {
     const userId = req.user.id;

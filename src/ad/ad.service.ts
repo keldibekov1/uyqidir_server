@@ -157,19 +157,28 @@ export class AdService {
     const ad = await this.prisma.ad.findUnique({
       where: { id },
       include: {
-        likes: true,
+        likes: {
+          select: { userId: true }, // faqat userId olamiz (kimlar like bosganligini to‘liq emas)
+        },
         user: true,
         city: { include: { region: true } },
         amenities: { include: { amenity: true } },
       },
     });
 
-    if (!ad) throw new NotFoundException('Bunday ad topilmadi');
+    if (!ad) throw new NotFoundException('Bunday elon topilmadi');
+
+    const liked = userId
+      ? ad.likes.some((like) => like.userId === userId)
+      : false;
+    const likeCount = ad.likes.length;
+
+    const { likes, ...adWithoutLikes } = ad;
 
     const result = {
-      ...ad,
-      liked: userId ? ad.likes.some((like) => like.userId === userId) : false,
-      likeCount: ad.likes.length,
+      ...adWithoutLikes,
+      liked,
+      likeCount,
     };
 
     return JSON.parse(
