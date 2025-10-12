@@ -48,7 +48,17 @@ export class LikeService {
   async findUserLikes(userId: string) {
     return this.prisma.adLike.findMany({
       where: { userId },
-      include: { ad: true },
+      include: {
+        ad: {
+          include: {
+            city: {
+              include: {
+                region: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 }
