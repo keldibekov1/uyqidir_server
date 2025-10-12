@@ -157,22 +157,35 @@ export class AdService {
     const ad = await this.prisma.ad.findUnique({
       where: { id },
       include: {
-        likes: {
-          select: { userId: true }, // faqat userId olamiz (kimlar like bosganligini to‘liq emas)
-        },
+        likes: { select: { userId: true } },
         user: true,
         city: { include: { region: true } },
         amenities: { include: { amenity: true } },
       },
     });
 
-    if (!ad) throw new NotFoundException('Bunday elon topilmadi');
-    await this.prisma.ad.update({
-      where: { id },
-      data: {
-        viewsCount: { increment: 1 },
-      },
-    });
+    if (!ad) throw new NotFoundException('Bunday eʼlon topilmadi');
+    if (userId) {
+      const alreadyViewed = await this.prisma.adView.findUnique({
+        where: { userId_adId: { userId, adId: id } },
+      });
+
+      if (!alreadyViewed) {
+        await this.prisma.adView.create({
+          data: { userId, adId: id },
+        });
+
+        await this.prisma.ad.update({
+          where: { id },
+          data: { viewsCount: { increment: 1 } },
+        });
+      }
+    } else {
+      await this.prisma.ad.update({
+        where: { id },
+        data: { viewsCount: { increment: 1 } },
+      });
+    }
 
     const liked = userId
       ? ad.likes.some((like) => like.userId === userId)

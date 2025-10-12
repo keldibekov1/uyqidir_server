@@ -139,7 +139,7 @@ model AdView {
   adId   String
 
   user User @relation(fields: [userId], references: [id])
-  ad   Ad   @relation(fields: [adId], references: [id])
+  ad   Ad   @relation(fields: [adId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
