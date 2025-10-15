@@ -50,6 +50,7 @@ export class AdController {
   async findAll(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('regionId') regionId?: string,
     @Query('cityId') cityId?: string,
     @Query('rentType') rentType?: RentType,
     @Query('adType') adType?: AdType,
@@ -63,6 +64,7 @@ export class AdController {
   ) {
     return this.adService.findAll(Number(page) || 1, Number(limit) || 10, {
       cityId,
+      regionId,
       rentType,
       adType,
       forWhom,
