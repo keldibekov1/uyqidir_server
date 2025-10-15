@@ -31,6 +31,7 @@ export class AdController {
 
   @ApiQuery({ name: 'page', required: false, example: 1 })
   @ApiQuery({ name: 'limit', required: false, example: 10 })
+  @ApiQuery({ name: 'regionId', required: false })
   @ApiQuery({ name: 'cityId', required: false })
   @ApiQuery({ name: 'rentType', required: false, enum: RentType })
   @ApiQuery({ name: 'adType', required: false, enum: AdType })
