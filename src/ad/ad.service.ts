@@ -91,6 +91,7 @@ export class AdService {
     limit: number = 10,
     filters?: {
       cityId?: string;
+      regionId?: string;
       rentType?: RentType;
       adType?: AdType;
       forWhom?: ForWhom;
@@ -106,7 +107,14 @@ export class AdService {
     const where: any = {};
 
     if (filters) {
-      if (filters.cityId) where.cityId = filters.cityId;
+      if (filters.cityId) {
+        where.cityId = filters.cityId;
+      } else if (filters.regionId) {
+        where.city = {
+          regionId: filters.regionId,
+        };
+      }
+
       if (filters.rentType) where.rentType = filters.rentType;
       if (filters.adType) where.adType = filters.adType;
       if (filters.forWhom) where.forWhom = filters.forWhom;
@@ -135,7 +143,12 @@ export class AdService {
         take: limit,
         orderBy,
         include: {
-          city: true,
+          city: {
+            include: {
+              region: true, 
+            },
+          },
+          user: true,
         },
       }),
       this.prisma.ad.count({ where }),
