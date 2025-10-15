@@ -50,8 +50,16 @@ export class UploadController {
 
           await sharp(filePath)
             .rotate()
-            .resize({ width: 1920, withoutEnlargement: true })
-            .jpeg({ quality: 80 })
+            .resize(1080, 1280, {
+              fit: 'cover', // Markazdan kesib, kadrni to‘ldiradi
+              position: 'center', // O‘rtadan joylashtiradi
+            })
+            .jpeg({
+              quality: 80, // Fayl kichik bo‘ladi (~300–600 KB)
+              progressive: true, // Brauzer bosqichma-bosqich yuklaydi
+              chromaSubsampling: '4:2:0', // Rang ma’lumotini siqadi
+              mozjpeg: true, // Optimal siqish
+            })
             .toFile(tempCompressed);
 
           fs.renameSync(tempCompressed, filePath);
